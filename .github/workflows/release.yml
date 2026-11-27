@@ -2,13 +2,23 @@ name: Package tagged release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to package
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+concurrency: package-release-${{ inputs.tag || github.ref_name }}
+
 jobs:
   build:
     uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ format('refs/tags/{0}', inputs.tag || github.ref_name) }}
 
   release:
     needs: build
@@ -25,11 +35,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
           package="SmartBeacons-${RELEASE_TAG}.zip"
           test -f "$package"
+          if draft="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            test "$draft" = true
+            gh release upload "$RELEASE_TAG" "$package"
+            exit 0
+          fi
           flags=(--verify-tag --draft --generate-notes --title "Smart Beacons ${RELEASE_TAG}")
           if [[ "$RELEASE_TAG" == *-* ]]; then
             flags+=(--prerelease)

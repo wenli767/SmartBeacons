@@ -4,6 +4,11 @@ on:
     branches: ["**"]
   pull_request:
   workflow_call:
+    inputs:
+      ref:
+        description: Git ref to build
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -14,6 +19,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
