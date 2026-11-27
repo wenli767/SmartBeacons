@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.2 — 2026-11-27
+
+- Fixed a save-loading stall caused by an oversized Smart Beacons priority file. The save now loads with priorities unavailable for that session and the file is preserved.
+- Aligned the file-size limit with the largest set of UTF-8 priority IDs the mod can write.
+
 ## 0.5.0-alpha.1 — 2026-11-27
 
 - Added reversible HUD fading, scaling, focus labels, distance and location-based behavior, and category overrides.

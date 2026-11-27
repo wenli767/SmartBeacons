@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using SmartBeacons.Core;
 using SmartBeacons.Persistence;
@@ -98,25 +99,25 @@ public sealed class LayoutAndPersistenceTests
         // Both game beacons can be named "Home". Only the serialized id enters the store.
         string firstHomeId = "guid-for-first-home";
         string secondHomeId = "guid-for-second-home";
-        priorities.Load(temp.First);
+        Assert.True(priorities.TryLoad(temp.First, out _));
         Assert.True(priorities.Toggle(firstHomeId));
         Assert.False(priorities.Contains(secondHomeId));
         priorities.Save(temp.Second);
         Assert.False(Directory.Exists(temp.Second));
         priorities.Save(temp.First);
-        priorities.Load(temp.Second);
+        Assert.True(priorities.TryLoad(temp.Second, out _));
         Assert.False(priorities.Contains(firstHomeId));
         Assert.True(priorities.Toggle(secondHomeId));
         priorities.Save(temp.Second);
-        priorities.Load(temp.First);
+        Assert.True(priorities.TryLoad(temp.First, out _));
         Assert.True(priorities.Contains(firstHomeId));
         Assert.False(priorities.Contains(secondHomeId));
 
         Assert.True(priorities.Toggle(firstHomeId));
         priorities.Save(temp.First);
-        priorities.Load(temp.First);
+        Assert.True(priorities.TryLoad(temp.First, out _));
         Assert.False(priorities.Contains(firstHomeId));
-        priorities.Load(temp.Second);
+        Assert.True(priorities.TryLoad(temp.Second, out _));
         Assert.True(priorities.Contains(secondHomeId));
     }
 
@@ -126,7 +127,7 @@ public sealed class LayoutAndPersistenceTests
         using var temp = new SaveDirectories();
         var priorities = new PriorityStore();
         Assert.False(priorities.Toggle("ok"));
-        priorities.Load(temp.First);
+        Assert.True(priorities.TryLoad(temp.First, out _));
         foreach (string id in new[] { null, "", " ", "with\nnewline", new string('x', 257) })
         {
             Assert.False(priorities.Toggle(id));
@@ -134,6 +135,54 @@ public sealed class LayoutAndPersistenceTests
         }
         priorities.Save(temp.First);
         Assert.False(Directory.Exists(temp.First));
+    }
+
+    [Fact]
+    public void OversizedSidecarLeavesPrioritiesEmptyAndPreservesTheFile()
+    {
+        using var temp = new SaveDirectories();
+        var priorities = new PriorityStore();
+        Assert.True(priorities.TryLoad(temp.First, out _));
+        Assert.True(priorities.Toggle("first-save-beacon"));
+        priorities.Save(temp.First);
+
+        const long oversizedLength = 4 * 1024 * 1024;
+        Directory.CreateDirectory(temp.Second);
+        string file = Path.Combine(temp.Second, "SmartBeacons.priorities.txt");
+        using (FileStream stream = File.Create(file))
+            stream.SetLength(oversizedLength);
+
+        Assert.False(priorities.TryLoad(temp.Second, out string warning));
+        Assert.Contains("exceeds the size limit", warning);
+        Assert.False(priorities.Ready);
+        Assert.False(priorities.Contains("first-save-beacon"));
+        Assert.False(priorities.Toggle("second-save-beacon"));
+        priorities.Save(temp.Second);
+        Assert.Equal(oversizedLength, new FileInfo(file).Length);
+
+        Assert.True(priorities.TryLoad(temp.First, out _));
+        Assert.True(priorities.Contains("first-save-beacon"));
+    }
+
+    [Fact]
+    public void MaximumLengthUtf8IdsRoundTripBeyondTheOldFileLimit()
+    {
+        using var temp = new SaveDirectories();
+        var priorities = new PriorityStore();
+        Assert.True(priorities.TryLoad(temp.First, out _));
+        var ids = new List<string>();
+        string suffix = new('海', 252);
+        for (int i = 0; i < 4096; i++)
+        {
+            string id = i.ToString("D4", CultureInfo.InvariantCulture) + suffix;
+            ids.Add(id);
+            Assert.True(priorities.Toggle(id));
+        }
+
+        priorities.Save(temp.First);
+        Assert.True(new FileInfo(Path.Combine(temp.First, "SmartBeacons.priorities.txt")).Length > 2 * 1024 * 1024);
+        Assert.True(priorities.TryLoad(temp.First, out _));
+        Assert.All(ids, id => Assert.True(priorities.Contains(id)));
     }
 
     private static GroupPoint Point(string id, float x, float y) => new(id, new ScreenPoint(x, y));

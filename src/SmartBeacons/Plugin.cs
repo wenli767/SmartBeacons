@@ -15,7 +15,7 @@ using Config;
 using Integration;
 using Persistence;
 
-[BepInPlugin(Id, "Smart Beacons", "0.5.0.1")]
+[BepInPlugin(Id, "Smart Beacons", "0.5.0.2")]
 [BepInDependency(NautilusId, "1.0.0.57")]
 [BepInProcess("Subnautica.exe")]
 public sealed class Plugin : BaseUnityPlugin
@@ -144,9 +144,8 @@ public sealed class Plugin : BaseUnityPlugin
         LeaveSave();
         try
         {
-            priorities.Load(SaveUtils.GetCurrentSaveDataDir());
-            if (!priorities.Ready)
-                Logger.LogWarning("Smart Beacons could not find the active save directory. Priorities are unavailable for this session.");
+            if (!priorities.TryLoad(SaveUtils.GetCurrentSaveDataDir(), out string warning))
+                Logger.LogWarning($"Smart Beacons priorities are unavailable for this save load. {warning}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {

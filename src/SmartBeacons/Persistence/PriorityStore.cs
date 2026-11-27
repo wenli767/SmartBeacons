@@ -9,6 +9,9 @@ internal sealed class PriorityStore
 {
     private const string FileName = "SmartBeacons.priorities.txt";
     private const int MaxEntries = 4096;
+    private const int MaxIdLength = 256;
+    // UTF-8 uses at most three bytes per UTF-16 code unit, plus a CRLF per line.
+    private const int MaxSidecarBytes = MaxEntries * (3 * MaxIdLength + 2);
     private readonly HashSet<string> ids = new(StringComparer.Ordinal);
     private string directory;
     private bool dirty;
@@ -18,7 +21,7 @@ internal sealed class PriorityStore
 
     public static bool ValidId(string id)
     {
-        if (string.IsNullOrWhiteSpace(id) || id.Length > 256)
+        if (string.IsNullOrWhiteSpace(id) || id.Length > MaxIdLength)
             return false;
         foreach (char character in id)
         {
@@ -35,27 +38,39 @@ internal sealed class PriorityStore
         dirty = false;
     }
 
-    public void Load(string saveDirectory)
+    public bool TryLoad(string saveDirectory, out string warning)
     {
         Reset();
         if (string.IsNullOrWhiteSpace(saveDirectory))
-            return;
-        directory = Path.GetFullPath(saveDirectory);
-        string file = Path.Combine(directory, FileName);
-        if (!File.Exists(file))
-            return;
-        if (new FileInfo(file).Length > 2 * 1024 * 1024)
-            throw new InvalidDataException("The priority sidecar exceeds the size limit.");
-
-        var loaded = new HashSet<string>(StringComparer.Ordinal);
-        foreach (string line in File.ReadLines(file, Encoding.UTF8))
         {
-            if (ValidId(line))
-                loaded.Add(line);
-            if (loaded.Count == MaxEntries)
-                break;
+            warning = "Could not find the active save directory.";
+            return false;
         }
-        ids.UnionWith(loaded);
+
+        string fullDirectory = Path.GetFullPath(saveDirectory);
+        string file = Path.Combine(fullDirectory, FileName);
+        if (File.Exists(file))
+        {
+            using var stream = File.OpenRead(file);
+            if (stream.Length > MaxSidecarBytes)
+            {
+                warning = "The priority sidecar exceeds the size limit.";
+                return false;
+            }
+
+            var loaded = new HashSet<string>(StringComparer.Ordinal);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            while (loaded.Count < MaxEntries && reader.ReadLine() is string line)
+            {
+                if (ValidId(line))
+                    loaded.Add(line);
+            }
+            ids.UnionWith(loaded);
+        }
+
+        directory = fullDirectory;
+        warning = null;
+        return true;
     }
 
     public bool Toggle(string id)
