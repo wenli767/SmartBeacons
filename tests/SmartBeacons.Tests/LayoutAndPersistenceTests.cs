@@ -11,6 +11,22 @@ namespace SmartBeacons.Tests;
 public sealed class LayoutAndPersistenceTests
 {
     [Fact]
+    public void ForcedCanvasPassesDoNotAdvanceHudTransitionsTwice()
+    {
+        var clock = new HudFrameTime();
+        float opacity = 1f;
+        const float delta = .025f;
+        const float transitionSeconds = .2f;
+
+        opacity = Number.MoveTowards(opacity, .25f, clock.Advance(20, delta) / transitionSeconds);
+        Assert.Equal(.875f, opacity);
+        opacity = Number.MoveTowards(opacity, .25f, clock.Advance(20, delta) / transitionSeconds);
+        Assert.Equal(.875f, opacity);
+        opacity = Number.MoveTowards(opacity, .25f, clock.Advance(21, delta) / transitionSeconds);
+        Assert.Equal(.75f, opacity);
+    }
+
+    [Fact]
     public void GroupingUsesScreenOverlapAndExcludesUnavailableAndPriorityMarkers()
     {
         var groups = new ScreenGroups();

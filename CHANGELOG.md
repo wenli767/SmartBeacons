@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.5 — 2026-11-27
+
+- Waited for Unity's initial input check so holding a hotkey while it is enabled or rebound cannot trigger it.
+- Kept fade timing consistent when Unity performs several canvas updates in one frame.
+
 ## 0.5.0-alpha.4 — 2026-11-27
 
 - Moved HUD styling to Subnautica's managed pre-canvas callbacks after Harmony failed to compile the patch for the vanilla ping update on build 1.22.83031.

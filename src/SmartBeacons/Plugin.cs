@@ -15,7 +15,7 @@ using Config;
 using Integration;
 using Persistence;
 
-[BepInPlugin(Id, "Smart Beacons", "0.5.0.4")]
+[BepInPlugin(Id, "Smart Beacons", "0.5.0.5")]
 [BepInDependency(NautilusId, "1.0.0.57")]
 [BepInProcess("Subnautica.exe")]
 public sealed class Plugin : BaseUnityPlugin

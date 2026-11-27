@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.UI;
 using UWE;
 
@@ -31,6 +32,7 @@ internal sealed class GameInputAdapter
     private readonly ManualLogSource log;
     private InputAction revealAction, priorityAction;
     private bool bindingsDirty = true;
+    private bool awaitingInputUpdate;
     private bool faulted;
     private int lastFrame = -1;
 
@@ -48,15 +50,23 @@ internal sealed class GameInputAdapter
             .CreateInput("Toggle focused beacon priority", "Look toward an enabled beacon to change its priority.")
             .WithCategory("Smart Beacons");
         GameInput.OnBindingsChanged += InvalidateBindings;
+        InputSystem.onAfterUpdate += OnInputUpdated;
     }
 
     public void Dispose()
     {
         GameInput.OnBindingsChanged -= InvalidateBindings;
+        InputSystem.onAfterUpdate -= OnInputUpdated;
         DisposeActions();
     }
 
     private void InvalidateBindings() => bindingsDirty = true;
+
+    private void OnInputUpdated()
+    {
+        if (InputState.currentUpdateType is InputUpdateType.Dynamic or InputUpdateType.Fixed or InputUpdateType.Manual)
+            awaitingInputUpdate = false;
+    }
 
     public void Read(Player player, Settings settings)
     {
@@ -91,6 +101,8 @@ internal sealed class GameInputAdapter
 
         if (bindingsDirty)
             RefreshBindings();
+        if (awaitingInputUpdate)
+            return;
 
         bool allowed = settings.Active && player && !player.cinematicModeActive &&
             !WaitScreen.IsWaiting && !FreezeTime.HasFreezers() && Time.timeScale > 0f &&
@@ -128,6 +140,8 @@ internal sealed class GameInputAdapter
 
     private void RefreshBindings()
     {
+        // Newly enabled button actions read their initial state on the next input update.
+        awaitingInputUpdate = true;
         DisposeActions();
         revealAction = CreateFilteredAction(reveal, priority);
         priorityAction = CreateFilteredAction(priority, reveal);

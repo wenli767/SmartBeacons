@@ -2,12 +2,12 @@
 
 Smart Beacons is a first-playthrough-friendly HUD mod for the original Steam release of Subnautica. It fades and shrinks existing navigation icons away from your view, shows names and distances as you look toward them, and combines overlapping icons into expandable groups. Discovery, exploration, and the PDA's beacon visibility controls continue to follow the game.
 
-**Version 0.5.0-alpha.4** fixes a HUD setup error found in the first in-game test. The new HUD integration still needs an in-game check.
+**Version 0.5.0-alpha.5** includes the fix for the first in-game HUD setup error and follow-up fixes for hotkey and fade timing. The new HUD integration still needs an in-game check.
 
 ## Install
 
 - Use the original Subnautica **public** Steam branch on Windows. Install the [Subnautica BepInEx 5 pack](https://www.nexusmods.com/subnautica/mods/1108) and [Nautilus for original Subnautica, build 1.0.0.57 or newer](https://github.com/SubnauticaModding/Nautilus/releases/tag/1.0.0-pre.57).
-- In Vortex, manage Subnautica with the [Subnautica Support extension](https://www.nexusmods.com/site/mods/202). Choose **Install From File**, select `SmartBeacons-v0.5.0-alpha.4.zip`, and enable and deploy it. The installed type should be **BepInEx Plugin**.
+- In Vortex, manage Subnautica with the [Subnautica Support extension](https://www.nexusmods.com/site/mods/202). Choose **Install From File**, select `SmartBeacons-v0.5.0-alpha.5.zip`, and enable and deploy it. The installed type should be **BepInEx Plugin**.
 - For manual installation, extract the ZIP into the folder containing `Subnautica.exe`. Confirm that the only installed mod file is `Subnautica/BepInEx/plugins/SmartBeacons/SmartBeacons.dll`.
 
 ## Settings and controls

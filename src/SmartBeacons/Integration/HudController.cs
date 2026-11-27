@@ -29,6 +29,7 @@ internal sealed class HudController
     private readonly ScreenGroups groups = new();
     private readonly LabelLayout labels = new();
     private readonly MarkerBadges badges = new();
+    private readonly HudFrameTime frameTime = new();
     private readonly Dictionary<string, ScreenPoint> labelOffsets = new(StringComparer.Ordinal);
     private uGUI_Pings owner;
     private Canvas canvas;
@@ -461,7 +462,8 @@ internal sealed class HudController
     private void Draw(Settings settings, Camera uiCamera, bool reveal)
     {
         badges.Begin();
-        float dt = Time.unscaledDeltaTime;
+        // Unity can render the canvases again after a forced layout in the same frame.
+        float dt = frameTime.Advance(Time.frameCount, Time.unscaledDeltaTime);
         foreach (HudMarker marker in active)
         {
             marker.LabelOffset = settings.AvoidLabelOverlap && !reveal &&
