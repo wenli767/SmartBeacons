@@ -2,12 +2,12 @@
 
 Smart Beacons is a first-playthrough-friendly HUD mod for the original Steam release of Subnautica. It fades and shrinks existing navigation icons away from your view, shows names and distances as you look toward them, and combines overlapping icons into expandable groups. Discovery, exploration, and the PDA's beacon visibility controls continue to follow the game.
 
-**Version 0.5.0-alpha.2** has a Release build and automated tests. Windows gameplay, Vortex deployment, and compatibility with installed mods still need an in-game smoke test.
+**Version 0.5.0-alpha.3** has a Release build and automated tests. Windows gameplay, Vortex deployment, and compatibility with installed mods still need an in-game smoke test.
 
 ## Install
 
 - Use the original Subnautica **public** Steam branch on Windows. Install the [Subnautica BepInEx 5 pack](https://www.nexusmods.com/subnautica/mods/1108) and [Nautilus for original Subnautica, build 1.0.0.57 or newer](https://github.com/SubnauticaModding/Nautilus/releases/tag/1.0.0-pre.57).
-- In Vortex, manage Subnautica with the [Subnautica Support extension](https://www.nexusmods.com/site/mods/202). Choose **Install From File**, select `SmartBeacons-v0.5.0-alpha.2.zip`, and enable and deploy it. The installed type should be **BepInEx Plugin**.
+- In Vortex, manage Subnautica with the [Subnautica Support extension](https://www.nexusmods.com/site/mods/202). Choose **Install From File**, select `SmartBeacons-v0.5.0-alpha.3.zip`, and enable and deploy it. The installed type should be **BepInEx Plugin**.
 - For manual installation, extract the ZIP into the folder containing `Subnautica.exe`. Confirm that the only installed mod file is `Subnautica/BepInEx/plugins/SmartBeacons/SmartBeacons.dll`.
 
 ## Settings and controls
@@ -25,7 +25,7 @@ Open **Options → Mods → Smart Beacons** for appearance, focus and distance, 
 Balanced uses a 5° focus exit margin. Distance fading starts at 300 m and reaches 15% at 1,500 m. Editing an individual setting selects Custom. Presets and the reset button preserve each save's priorities and the game's input bindings.
 
 - **Quick reveal** defaults to **Left Alt**. Hold it to show eligible on-screen labels and restore stock icon sizes while grouping and layout changes pause. Toggle mode is available under Mods. Menus, text entry, and pause suspend the action.
-- **Toggle focused beacon priority** starts unbound. Bind it under **Options → Mod Input → Smart Beacons**, look toward a visible marker, and press it. You can bind either action on keyboard or controller. If an action shares another binding, assign a free binding in Mod Input.
+- **Toggle focused beacon priority** starts unbound. Bind it under **Options → Mod Input → Smart Beacons**, look toward a visible marker, and press it. You can bind either action on keyboard or controller. If one binding conflicts, Smart Beacons skips that binding and leaves the other bindings for that action available.
 - Priority destinations retain a full stock icon scale and get a small star. Save normally to retain your changes. You can still hide any destination in the stock PDA Beacon Manager.
 - Story and unrecognized or mod-added navigation categories default to Vanilla. **Hidden unless focused** reduces clutter while retaining focus, priority, and quick reveal overrides. Edge indicators keep the game's off-screen behavior.
 

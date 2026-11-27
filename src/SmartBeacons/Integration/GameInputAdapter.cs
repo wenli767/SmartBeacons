@@ -6,6 +6,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UWE;
 
@@ -24,18 +25,17 @@ internal sealed class GameInputAdapter
     private readonly GameInput.Button reveal;
     private readonly GameInput.Button priority;
     private readonly RevealState revealState = new();
+    private readonly PriorityPress priorityPress = new();
     private readonly List<BindConflict> conflicts = new();
     private readonly HashSet<string> reportedBindings = new(StringComparer.OrdinalIgnoreCase);
     private readonly ManualLogSource log;
+    private InputAction revealAction, priorityAction;
     private bool bindingsDirty = true;
-    private bool inputChecked;
-    private bool revealConflicts, priorityConflicts;
-    private bool priorityArmed;
     private bool faulted;
     private int lastFrame = -1;
 
     public bool IsRevealing { get; private set; }
-    public bool TogglePriority { get; private set; }
+    public bool ConsumePriorityPress() => priorityPress.Consume();
 
     public GameInputAdapter(ManualLogSource log)
     {
@@ -50,7 +50,12 @@ internal sealed class GameInputAdapter
         GameInput.OnBindingsChanged += InvalidateBindings;
     }
 
-    public void Dispose() => GameInput.OnBindingsChanged -= InvalidateBindings;
+    public void Dispose()
+    {
+        GameInput.OnBindingsChanged -= InvalidateBindings;
+        DisposeActions();
+    }
+
     private void InvalidateBindings() => bindingsDirty = true;
 
     public void Read(Player player, Settings settings)
@@ -66,44 +71,43 @@ internal sealed class GameInputAdapter
             faulted = true;
             Reset();
             log.LogWarning($"Smart Beacons hotkeys are unavailable for this session: {ex.Message}");
+            try { DisposeActions(); }
+            catch (Exception cleanupError) { log.LogWarning($"Could not dispose Smart Beacons hotkeys: {cleanupError.Message}"); }
         }
     }
 
     private void ReadCore(Player player, Settings settings)
     {
         lastFrame = Time.frameCount;
-        TogglePriority = false;
         bool ready = GameInput.IsInitialized;
-        if (ready && (bindingsDirty || !inputChecked))
+        if (!ready)
         {
-            CheckBindings();
-            inputChecked = true;
-            bindingsDirty = false;
+            if (revealAction != null || priorityAction != null)
+                DisposeActions();
+            bindingsDirty = true;
+            Reset();
+            return;
         }
 
-        bool allowed = ready && settings.Active && player && !player.cinematicModeActive &&
+        if (bindingsDirty)
+            RefreshBindings();
+
+        bool allowed = settings.Active && player && !player.cinematicModeActive &&
             !WaitScreen.IsWaiting && !FreezeTime.HasFreezers() && Time.timeScale > 0f &&
             !GameInput.IsRebinding && !Cursor.visible && player.GetPDA() is { isInUse: false } && !CapturingText();
-        bool revealAllowed = allowed && !revealConflicts;
-        bool priorityAllowed = allowed && !priorityConflicts;
+        bool revealAllowed = allowed && revealAction != null;
+        bool priorityAllowed = allowed && priorityAction != null;
 
         IsRevealing = revealState.Read(settings.RevealMode, revealAllowed,
-            revealAllowed && GameInput.GetButtonHeld(reveal), revealAllowed && GameInput.GetButtonDown(reveal));
-
-        if (!priorityAllowed)
-            priorityArmed = false;
-        else if (!priorityArmed)
-            priorityArmed = !GameInput.GetButtonHeld(priority);
-        else
-            TogglePriority = GameInput.GetButtonDown(priority);
+            revealAllowed && revealAction.IsPressed(), revealAllowed && revealAction.WasPressedThisFrame());
+        priorityPress.Read(priorityAllowed, priorityAllowed && priorityAction.IsPressed(),
+            priorityAllowed && priorityAction.WasPressedThisFrame());
     }
 
     public void Reset()
     {
-        lastFrame = -1;
         IsRevealing = false;
-        TogglePriority = false;
-        priorityArmed = false;
+        priorityPress.Reset();
         revealState.Reset();
     }
 
@@ -122,14 +126,19 @@ internal sealed class GameInputAdapter
         return legacy && legacy.isFocused;
     }
 
-    private void CheckBindings()
+    private void RefreshBindings()
     {
-        revealConflicts = HasConflict(reveal);
-        priorityConflicts = HasConflict(priority);
+        DisposeActions();
+        revealAction = CreateFilteredAction(reveal, priority);
+        priorityAction = CreateFilteredAction(priority, reveal);
+        bindingsDirty = false;
+        Reset();
     }
 
-    private bool HasConflict(GameInput.Button button)
+    private InputAction CreateFilteredAction(GameInput.Button button, GameInput.Button otherHotkey)
     {
+        // Nautilus owns rebinding. These polling actions contain only the working paths.
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (GameInput.Device device in GameInput.AllDevices)
         {
             foreach (GameInput.BindingSet slot in GameInput.AllBindingSets)
@@ -137,18 +146,61 @@ internal sealed class GameInputAdapter
                 string binding = GameInput.GetBinding(device, button, slot);
                 if (string.IsNullOrWhiteSpace(binding))
                     continue;
-                conflicts.Clear();
-                GameInput.GetAllActions(device, binding, conflicts);
-                foreach (BindConflict conflict in conflicts)
+                if (BindingConflicts(device, button, otherHotkey, binding))
                 {
-                    if (conflict.action == button)
-                        continue;
                     if (reportedBindings.Add(binding))
                         log.LogWarning($"Smart Beacons ignored a conflicting binding ({binding}). Choose a free binding under Mod Input.");
-                    return true;
                 }
+                else
+                    paths.Add(binding);
             }
         }
+
+        if (paths.Count == 0)
+            return null;
+
+        var action = new InputAction(type: InputActionType.Button) { wantsInitialStateCheck = true };
+        try
+        {
+            foreach (string path in paths)
+                action.AddBinding(path);
+            action.Enable();
+            return action;
+        }
+        catch
+        {
+            action.Dispose();
+            throw;
+        }
+    }
+
+    private bool BindingConflicts(GameInput.Device device, GameInput.Button button, GameInput.Button otherHotkey,
+        string path)
+    {
+        conflicts.Clear();
+        GameInput.GetAllActions(device, path, conflicts);
+        foreach (BindConflict conflict in conflicts)
+        {
+            if (conflict.action != button)
+                return true;
+        }
+        foreach (GameInput.BindingSet slot in GameInput.AllBindingSets)
+        {
+            if (string.Equals(path, GameInput.GetBinding(device, otherHotkey, slot), StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
         return false;
+    }
+
+    private void DisposeActions()
+    {
+        try { revealAction?.Dispose(); }
+        finally
+        {
+            revealAction = null;
+            InputAction action = priorityAction;
+            priorityAction = null;
+            action?.Dispose();
+        }
     }
 }

@@ -15,7 +15,7 @@ using Config;
 using Integration;
 using Persistence;
 
-[BepInPlugin(Id, "Smart Beacons", "0.5.0.2")]
+[BepInPlugin(Id, "Smart Beacons", "0.5.0.3")]
 [BepInDependency(NautilusId, "1.0.0.57")]
 [BepInProcess("Subnautica.exe")]
 public sealed class Plugin : BaseUnityPlugin
@@ -89,8 +89,14 @@ public sealed class Plugin : BaseUnityPlugin
     private static void AfterUpdate(uGUI_Pings __instance, bool __runOriginal)
     {
         Plugin plugin = instance;
-        if (plugin?.hud == null || plugin.hudFaulted || !__runOriginal || !plugin.settings.Current.Active)
+        if (plugin?.hud == null || plugin.hudFaulted || !plugin.settings.Current.Active)
             return;
+        if (!__runOriginal)
+        {
+            if (plugin.hud.Owns(__instance))
+                plugin.Safely("hide Smart Beacons presentation for a skipped HUD update", plugin.hud.SuspendPresentation);
+            return;
+        }
         try { plugin.hud.Update(__instance, plugin.settings.Current); }
         catch (Exception ex) { plugin.FailHud("update navigation HUD", ex); }
     }

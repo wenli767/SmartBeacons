@@ -105,3 +105,34 @@ internal sealed class RevealState
         armed = false;
     }
 }
+
+internal sealed class PriorityPress
+{
+    private bool armed, pending;
+
+    public void Read(bool allowed, bool held, bool pressed)
+    {
+        if (!allowed)
+        {
+            Reset();
+            return;
+        }
+
+        pending = armed && pressed;
+        if (!armed)
+            armed = !held;
+    }
+
+    public bool Consume()
+    {
+        bool pressed = pending;
+        pending = false;
+        return pressed;
+    }
+
+    public void Reset()
+    {
+        armed = false;
+        pending = false;
+    }
+}

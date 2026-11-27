@@ -92,4 +92,35 @@ public sealed class FocusAndInputTests
         Assert.False(key.Read(RevealMode.Toggle, false, false, false));
         Assert.False(key.Read(RevealMode.Toggle, true, false, false));
     }
+
+    [Fact]
+    public void ASecondHudPassCannotConsumeTheSamePriorityPress()
+    {
+        var key = new PriorityPress();
+        key.Read(allowed: true, held: false, pressed: false);
+        key.Read(allowed: true, held: true, pressed: true);
+        Assert.True(key.Consume());
+        Assert.False(key.Consume());
+
+        key.Read(allowed: true, held: true, pressed: false);
+        Assert.False(key.Consume());
+        key.Read(allowed: true, held: true, pressed: true);
+        Assert.True(key.Consume());
+    }
+
+    [Fact]
+    public void PriorityPressResetsWhenInputIsBlockedAndRearmsOnRelease()
+    {
+        var key = new PriorityPress();
+        key.Read(allowed: true, held: false, pressed: false);
+        key.Read(allowed: true, held: true, pressed: true);
+        key.Read(allowed: false, held: true, pressed: false);
+        Assert.False(key.Consume());
+
+        key.Read(allowed: true, held: true, pressed: true);
+        Assert.False(key.Consume());
+        key.Read(allowed: true, held: false, pressed: false);
+        key.Read(allowed: true, held: true, pressed: true);
+        Assert.True(key.Consume());
+    }
 }

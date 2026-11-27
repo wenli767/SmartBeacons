@@ -138,12 +138,15 @@ internal sealed class HudMarker
         if (changedScale)
             IconTransform.localScale = appliedScale;
 
-        float labelTarget = !CanShowLabels ? nativeText * targetAlpha : Visual.LabelOpacity;
+        bool canShowLabels = CanShowLabels;
+        float labelTarget = canShowLabels ? Visual.LabelOpacity : nativeText * targetAlpha;
         if (suppressed || LabelOffset.X == float.PositiveInfinity)
             labelTarget = 0f;
         if (labelTransition < 0f)
             labelTransition = nativeText;
         labelTransition = suppressed ? 0f : Number.MoveTowards(labelTransition, labelTarget, speed);
+        if (!canShowLabels)
+            labelTransition = Mathf.Min(labelTransition, labelTarget);
         appliedText = labelTransition;
         changedText = Mathf.Abs(nativeText - appliedText) > Epsilon;
         if (changedText)

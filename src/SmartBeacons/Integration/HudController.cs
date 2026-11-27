@@ -113,6 +113,15 @@ internal sealed class HudController
         layoutDirty = true;
     }
 
+    public void SuspendPresentation()
+    {
+        badges.Begin();
+        badges.End();
+        focus.Clear();
+        input?.Reset();
+        layoutDirty = true;
+    }
+
     public void Update(uGUI_Pings hud, Settings settings)
     {
         if (!settings.Active)
@@ -122,11 +131,7 @@ internal sealed class HudController
         if (!player || !camera || !hud || !hud.isActiveAndEnabled || !hud.pingCanvas ||
             !hud.canvasGroup || hud.canvasGroup.alpha <= .0001f || !bindings.IsVisible(hud))
         {
-            badges.Begin();
-            badges.End();
-            focus.Clear();
-            input?.Reset();
-            layoutDirty = true;
+            SuspendPresentation();
             return;
         }
 
@@ -143,7 +148,10 @@ internal sealed class HudController
         input?.Read(player, settings);
         Dictionary<string, uGUI_Ping> gameMarkers = bindings.Markers(hud);
         if (gameMarkers == null)
+        {
+            SuspendPresentation();
             return;
+        }
         long start = settings.Diagnostics ? Stopwatch.GetTimestamp() : 0;
         Camera uiCamera = canvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
         float now = Time.unscaledTime;
@@ -163,7 +171,7 @@ internal sealed class HudController
         Location location = GetLocation(player);
         string previousFocus = focus.Selected;
         Collect(gameMarkers, camera, uiCamera, settings);
-        if (input?.TogglePriority == true)
+        if (input?.ConsumePriorityPress() == true)
             ToggleCurrentPriority(settings);
         bool reveal = input?.IsRevealing == true;
         bool layoutTick = layoutDirty || now >= nextLayout || reveal != wasRevealing || previousFocus != focus.Selected;
@@ -192,6 +200,7 @@ internal sealed class HudController
     private void Collect(Dictionary<string, uGUI_Ping> gameMarkers, Camera camera, Camera uiCamera, Settings settings)
     {
         generation++;
+        int seenCount = 0;
         active.Clear();
         focus.Begin();
         var cone = new FocusCone(settings.FocusAngle, settings.FocusHysteresis);
@@ -214,6 +223,7 @@ internal sealed class HudController
             }
 
             marker.LastSeen = generation;
+            seenCount++;
             bool previouslyActive = marker.Point.Depth > 0f || marker.Meters > 0f;
             bool previouslyOnScreen = marker.Point.OnScreen;
             marker.Point = default;
@@ -250,7 +260,7 @@ internal sealed class HudController
         }
         focus.Commit();
 
-        if (tracked.Count != gameMarkers.Count)
+        if (tracked.Count != seenCount)
         {
             expired.Clear();
             foreach (var marker in tracked)

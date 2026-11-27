@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0-alpha.3 — 2026-11-27
+
+- Kept working hotkey bindings active when another binding for the same action conflicts.
+- Made each priority press usable once, even if the HUD updates twice in a frame.
+- Cleared custom badges when the vanilla HUD update is skipped and prevented fading text from lingering past vanilla label visibility.
+
 ## 0.5.0-alpha.2 — 2026-11-27
 
 - Fixed a save-loading stall caused by an oversized Smart Beacons priority file. The save now loads with priorities unavailable for that session and the file is preserved.
