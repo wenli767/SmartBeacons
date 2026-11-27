@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Version>0.5.0-alpha.1</Version>
+    <FileVersion>0.5.0.1</FileVersion>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.36" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Unity.InputSystem" Version="1.4.1" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Subnautica.GameLibs" Version="82304.0.0-r.0" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Subnautica.Nautilus" Version="1.0.0-pre.57" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <!-- Nautilus compiles against 12.0.3. Smart Beacons does not use or ship JSON.NET. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" IncludeAssets="none" PrivateAssets="all" />
+    <AssemblyMetadata Include="SmartBeaconsVersion" Value="$(Version)" />
+  </ItemGroup>
+</Project>

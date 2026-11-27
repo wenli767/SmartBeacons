@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>11</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildThisFileDirectory)=/_/SmartBeacons/</PathMap>
+  </PropertyGroup>
+</Project>
