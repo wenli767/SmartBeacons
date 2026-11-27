@@ -2,11 +2,11 @@
 
 | Integration | Evidence | Live status |
 |---|---|---|
-| Steam original Subnautica public branch | Build 20241558 is the target. The official GameLibs reference pack compiles the plugin. | Game launch and actual asset layout pending. |
+| Steam original Subnautica public branch | Build 20241558 is the target. The first smoke test reached the game menu on Subnautica 1.22.83031 and exposed a Harmony compile error in HUD setup. Alpha.4 uses the game's managed HUD callbacks. | HUD behavior needs a second in-game check. |
 | Performance Booster | Its Nexus description covers performance. Source for the current published release was unavailable for this review. Smart Beacons touches the navigation HUD and has no graphics or streaming integration. | Unverified together. |
 | Better Scanner Blips Remake | Published source patches `uGUI_ResourceTracker.UpdateBlips`, `uGUI_ResourceTracker.OnDestroy`, and `ResourceTracker.Register`. Smart Beacons works only with `uGUI_Pings`. Map Room camera navigation pings are a distinct category from resource blips. | Source surfaces are separate. Live compatibility pending. |
 | CustomBeacons (2025) | Nexus describes custom icons and colors. Smart Beacons uses existing sprites and RGB. Public patch source was unavailable for this review. | Unverified together. |
-| Beacon Color Picker | Source patches `uGUI_Pings.OnAdd`, `OnColor`, and PDA row controls. Smart Beacons patches the update, removal and teardown path. | Related presentation is shared. Recoloring during active fades needs a live check. |
+| Beacon Color Picker | Source patches `uGUI_Pings.OnAdd`, `OnColor`, and PDA row controls. Smart Beacons applies styling after the game's ping update queue. | Related presentation is shared. Recoloring during active fades needs a live check. |
 | Easy Markers | Source patches text update and PDA listing or controls. Smart Beacons uses the existing text components and leaves PDA rows untouched. | Unverified together. |
 | Unknown or modded navigation types | Categories default to Vanilla. Users can opt in through Other. | New enum registrations and game-mod combinations need runtime checks. |
 

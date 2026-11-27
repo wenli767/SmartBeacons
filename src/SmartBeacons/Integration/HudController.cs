@@ -50,8 +50,6 @@ internal sealed class HudController
         this.log = log;
     }
 
-    public bool Owns(uGUI_Pings hud) => ReferenceEquals(hud, owner);
-
     public void Restore()
     {
         Exception firstFailure = null;
@@ -103,9 +101,9 @@ internal sealed class HudController
         }
     }
 
-    public void Remove(uGUI_Pings hud, string id)
+    public void Remove(string id)
     {
-        if (!Owns(hud) || id == null || !tracked.TryGetValue(id, out HudMarker marker))
+        if (id == null || !tracked.TryGetValue(id, out HudMarker marker))
             return;
         marker.Restore(bindings);
         badges.HideUnder(marker.IconTransform);
@@ -113,7 +111,7 @@ internal sealed class HudController
         layoutDirty = true;
     }
 
-    public void SuspendPresentation()
+    private void SuspendPresentation()
     {
         badges.Begin();
         badges.End();
@@ -126,16 +124,22 @@ internal sealed class HudController
     {
         if (!settings.Active)
             return;
+        if (!hud)
+        {
+            if (!ReferenceEquals(owner, null))
+                Clear();
+            return;
+        }
         Player player = Player.main;
         Camera camera = MainCamera.camera;
-        if (!player || !camera || !hud || !hud.isActiveAndEnabled || !hud.pingCanvas ||
+        if (!player || !camera || !hud.isActiveAndEnabled || !hud.pingCanvas ||
             !hud.canvasGroup || hud.canvasGroup.alpha <= .0001f || !bindings.IsVisible(hud))
         {
             SuspendPresentation();
             return;
         }
 
-        if (!Owns(hud) || canvasRoot != hud.pingCanvas)
+        if (!ReferenceEquals(hud, owner) || canvasRoot != hud.pingCanvas)
         {
             Clear();
             owner = hud;
@@ -143,6 +147,7 @@ internal sealed class HudController
             Canvas nearest = canvasRoot.GetComponentInParent<Canvas>();
             canvas = nearest ? nearest.rootCanvas : null;
             canvasScaler = canvas ? canvas.GetComponent<CanvasScaler>() : null;
+            log.LogInfo("Smart Beacons acquired the vanilla navigation HUD.");
         }
 
         input?.Read(player, settings);
@@ -192,7 +197,7 @@ internal sealed class HudController
         {
             nextDiagnostic = now + 10f;
             double elapsed = (Stopwatch.GetTimestamp() - start) * 1000d / Stopwatch.Frequency;
-            log.LogInfo($"HUD: {active.Count} managed, {focusedCount} focused, {priorityCount} priority, " +
+            log.LogInfo($"HUD: {gameMarkers.Count} vanilla markers, {painted.Count} styled, {focusedCount} focused, {priorityCount} priority, " +
                 $"{collapsedGroups} collapsed groups; sampled update {elapsed:F3} ms.");
         }
     }

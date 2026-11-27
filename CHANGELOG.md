@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.4 — 2026-11-27
+
+- Moved HUD styling to Subnautica's managed pre-canvas callbacks after Harmony failed to compile the patch for the vanilla ping update on build 1.22.83031.
+- Added a log entry when the vanilla navigation HUD is found. Periodic diagnostics now show how many vanilla markers were available and how many Smart Beacons styled.
+
 ## 0.5.0-alpha.3 — 2026-11-27
 
 - Kept working hotkey bindings active when another binding for the same action conflicts.
