@@ -30,9 +30,9 @@ internal readonly struct FocusCone
     public bool Contains(ViewPoint point, float alignment, bool wasFocused) =>
         point.OnScreen && Number.Finite(alignment) && alignment >= (wasFocused ? exitCos : enterCos);
 
-    public static float Alignment(float forwardDot, float squaredDistance) =>
-        squaredDistance > .000001f && Number.Finite(squaredDistance)
-            ? forwardDot / (float)Math.Sqrt(squaredDistance)
+    public static float Alignment(float forwardDot, float distance) =>
+        distance > .001f && Number.Finite(distance)
+            ? forwardDot / distance
             : float.NaN;
 }
 
@@ -53,6 +53,8 @@ internal sealed class FocusSelection
 
     public void Consider(string id, ViewPoint point, float alignment, FocusCone cone)
     {
+        if (string.IsNullOrEmpty(id))
+            return;
         if (id == previous && cone.Contains(point, alignment, true))
             retain = true;
         if (!cone.Contains(point, alignment, false))

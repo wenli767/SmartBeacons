@@ -32,8 +32,8 @@ internal sealed class Settings
     public bool ReduceInBase = true;
     public bool ReduceInLifepod = true;
     public bool ReduceInVehicle;
-    public bool Debug;
-    public bool Diagnostics;
+    public bool Debug = false;
+    public bool Diagnostics = false;
     public Behavior[] Categories =
     {
         Behavior.Smart, Behavior.Smart, Behavior.Smart, Behavior.Smart,

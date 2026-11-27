@@ -14,7 +14,7 @@ internal sealed class PriorityStore
     private bool dirty;
 
     public bool Ready => directory != null;
-    public bool Contains(string id) => ValidId(id) && ids.Contains(id);
+    public bool Contains(string id) => id != null && ids.Contains(id);
 
     public static bool ValidId(string id)
     {

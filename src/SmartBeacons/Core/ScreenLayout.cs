@@ -32,7 +32,7 @@ internal sealed class ScreenGroups
     private int[] parents = Array.Empty<int>();
     private int[] sizes = Array.Empty<int>();
 
-    public string GroupOf(string id) => current.TryGetValue(id, out string group) ? group : null;
+    public string GroupOf(string id) => id != null && current.TryGetValue(id, out string group) ? group : null;
 
     public void Clear()
     {

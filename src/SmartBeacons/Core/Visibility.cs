@@ -38,7 +38,9 @@ internal readonly struct Visual
         LabelOpacity = labelOpacity;
     }
 
-    public bool CanGroup => Mode is Presentation.Ordinary or Presentation.Emphasized;
+    public bool CanGroup(bool priority, bool focused, bool expand) =>
+        Mode is Presentation.Ordinary or Presentation.Emphasized && Opacity > 0f &&
+        !priority && (!focused || expand);
 }
 
 internal static class Visibility
